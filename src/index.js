@@ -1,42 +1,68 @@
 const p5 = require('p5')
 
-const toRadians = angleInDegrees => (Math.PI / 180.000) * angleInDegrees;
+const toRadians = angleInDegrees => Math.PI / 180 * angleInDegrees;
 
-class NGon {
+class Hex {
   points = []
   width;
   diameter;
   radius;
   rotation;
-  N;
-  constructor(diameter, rotation, N = 6) {
-
-    const createHex = (i) => this.hexCorner(
-      {
-        x: 0,
-        y: 0,
-      },
-      diameter /2,
-      i,
-      rotation % (360 / N)
-    );
-
-    this.N = N;
-    this.points = [...Array(N).keys()].map(createHex);
+  toSide;
+  shift;
+  hMult;
+  vMult;
+  origin;
+  constructor(diameter, initialRotation, origin = { x: 0, y: 0 }) {
     this.diameter = diameter;
     // distance to point
     this.radius = diameter / 2;
+    this.rotation = initialRotation;
+    this.origin = origin;
+
+    const createHex = i => this.hexCorner(
+      this.origin, this.radius, i, initialRotation % 60
+    );
+
+    this.points = [...Array(6).keys()].map(createHex);
     // side size
     this.width = this.radius * sin(toRadians(30)) * 2;
-    this.rotation = rotation;
+    this.toSide = this.radius * cos(toRadians(30))
+    this.hMult = Math.abs(Math.cos(toRadians(this.rotation * 3)))
+    this.vMult = Math.abs(Math.sin(toRadians(this.rotation * 3)))
+    const multiplier = (a, b) => a * this.toSide * 2 + b * (this.radius * 2);
+    this.shift = {
+      x: multiplier(this.vMult, this.hMult),
+      y: multiplier(this.hMult, this.vMult),
+      xOffset: this.hMult * (this.radius + this.width / 2) + this.vMult * this.toSide,
+      yOffset: this.hMult * 1 + this.vMult * (-(this.radius - this.width / 2))
+    }
+  }
+
+  getTranslation(column, row) {
+    return {
+      x: column * this.shift.x + this.vMult * this.toSide
+        * (row % 2 === 1 ? 1 : 0) + this.hMult * (-this.radius / 2) * column,
+      y: row * this.shift.y + this.vMult * (-this.radius / 2) * row
+        + this.hMult * (column % 2 === 1 ? 1 : 0) * (this.toSide)
+    }
+  }
+
+  getPoints(column, row) {
+    const translation = this.getTranslation(column, row)
+    return this.points.map(({x, y})=>({x: x+translation.x, y:y+translation.y}))
+  }
+
+  getOrigin(column, row) {
+    const translation = this.getTranslation(column, row)
+    return {x: this.origin.x + translation.x, y: this.origin.y + translation.y}
   }
 
   hexCorner(center, size, i, rotation) {
-    let angle_deg = rotation + (360 / this.N) * i;
-    let angle_rad = toRadians(angle_deg);
+    let angle = toRadians(rotation + 60 * i);
     return {
-      x: center.x + size * Math.cos(angle_rad),
-      y: center.y + size * Math.sin(angle_rad),
+      x: center.x + size * Math.cos(angle),
+      y: center.y + size * Math.sin(angle),
     };
   }
 }
@@ -52,25 +78,14 @@ const sketch = () => {
     push();
     for (let currentColumn = 0; currentColumn < dimensions[0]; currentColumn++) {
       for (let currentRow = 0; currentRow < dimensions[1]; currentRow++) {
-        push();
-        const hex = new NGon(diameter, rotation, n);
-        const shift = {
-          x: currentColumn * hex.radius * sin(toRadians(360 / n) + Math.abs(toRadians((hex.rotation - (360/2/n)) % (360/n)))) * 2,
-          y: currentRow * hex.radius * sin(toRadians(360 / n) + Math.abs(toRadians(hex.rotation % (360 / n)))) * 2
-        }
-        translate(shift.x, shift.y);
-
-        // translate(hex.width * currentColumn, -hex.width * currentRow)
-        if (currentRow % 2 === 1) {
-          translate(hex.width* sin(toRadians(360 / n) + Math.abs(toRadians((hex.rotation - (360/2/n)) % (360/n)))),0);
-        }
+        const hex = new Hex(diameter, rotation);
 
         beginShape();
-        hex.points.forEach(({ x, y }) => vertex(x, y));
+        hex.getPoints(currentColumn, currentRow)
+           .forEach(({ x, y }) => vertex(x, y));
         endShape(CLOSE);
-
-        text(`${currentColumn},${currentRow},${hex.rotation}`, 0, 0);
-        pop();
+        const {x, y} = hex.getOrigin(currentColumn, currentRow)
+        const d = text(`${currentColumn}, ${currentRow}`, x, y)
       }
     }
     pop();
@@ -82,13 +97,13 @@ const sketch = () => {
 
     rotationSlider = createSlider(0, 360, 0);
     rotationSlider.position(0, 0);
-    rotationSlider.style('width', `${(width/3)-10}px`);
+    rotationSlider.style('width', `${(width / 3) - 10}px`);
     nSlider = createSlider(1, 12, 6);
-    nSlider.position(width/3, 0);
-    nSlider.style('width', `${(width/3)-10}px`);
+    nSlider.position(width / 3, 0);
+    nSlider.style('width', `${(width / 3) - 10}px`);
     amountSlider = createSlider(1, 50, 4);
-    amountSlider.position(width/3*2, 0);
-    amountSlider.style('width', `${(width/3)-10}px`);
+    amountSlider.position(width / 3 * 2, 0);
+    amountSlider.style('width', `${(width / 3) - 10}px`);
   };
 
   draw = () => {
@@ -96,11 +111,14 @@ const sketch = () => {
     let n = nSlider.value();
     let amount = amountSlider.value();
     background(220);
+    text(rotation, 0, 30)
+    text(n, width / 3, 30)
+    text(amount, width * 2 / 3, 30)
     translate(100, 100);
-    drawHexes(60, rotation, n, [amount,amount]);
+    drawHexes(60, rotation, n, [amount, amount]);
     push()
     translate(width / 2, 0)
-    drawHexes(60, rotation + 30, n, [amount,amount]);
+    drawHexes(60, rotation + 30, n, [amount, amount]);
     pop()
   }
 }
