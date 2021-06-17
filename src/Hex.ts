@@ -15,8 +15,7 @@ export class Hex {
     shift: Point & {xOffset: number, yOffset: number};
     hMult: number;
     vMult: number;
-    origin: Point;
-    constructor(diameter: number, initialRotation: number, origin: Point = { x: 0, y: 0 }) {
+    constructor(diameter: number, initialRotation: number, public origin: Point = { x: 0, y: 0 }) {
       this.diameter = diameter;
       // distance to point
       this.radius = diameter / 2;
@@ -51,13 +50,13 @@ export class Hex {
     }
   }
 
-  getPoints(column: number, row: number) {
-    const translation = this.getTranslation(column, row)
+  getPoints() {
+    const translation = this.getTranslation(this.origin.x, this.origin.y)
     return this.points.map(({x, y})=>({x: x+translation.x, y:y+translation.y}))
   }
 
-  getOrigin(column: number, row: number) {
-    const translation = this.getTranslation(column, row)
+  getOrigin() {
+    const translation = this.getTranslation(this.origin.x, this.origin.y)
     return {x: this.origin.x + translation.x, y: this.origin.y + translation.y}
   }
 

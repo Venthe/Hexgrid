@@ -1,4 +1,5 @@
 import p5 from "p5";
+import { Grid } from "./Grid";
 import { Hex } from "./Hex";
 
 const sketch = (context: p5) => {
@@ -10,20 +11,18 @@ const sketch = (context: p5) => {
   function drawHexes(diameter: number, rotation: number, n: number, dimensions: number[]) {
 
     context.push();
-    for (let currentColumn = 0; currentColumn < dimensions[0]; currentColumn++) {
-      for (let currentRow = 0; currentRow < dimensions[1]; currentRow++) {
-        const hex = new Hex(diameter, rotation);
+    new Grid(dimensions[0], dimensions[1], rotation, diameter)
+      .getFlatGrid()
+      .forEach(hex => {
 
         context.beginShape();
-        hex.getPoints(currentColumn, currentRow)
+        hex.getPoints()
           .forEach(({ x, y }) => context.vertex(x, y));
-          context.endShape(context.CLOSE);
-        const { x, y } = hex.getOrigin(currentColumn, currentRow)
-        const d = context.text(`${currentColumn}, ${currentRow}`, x, y)
-      }
-    }
+        context.endShape(context.CLOSE);
+        const { x, y } = hex.getOrigin()
+        context.text(`${hex.getOrigin().x}, ${hex.getOrigin().y}`, x, y)
+      });
     context.pop();
-    //line(0,0,10,10)
   }
 
   context.setup = () => {
