@@ -1,17 +1,15 @@
 import p5 from "p5";
 import { Grid } from "./Grid";
-import { Hex } from "./Hex";
+import { Hex, Point } from "./Hex";
 
 const sketch = (context: p5) => {
 
   let rotationSlider: Element | any;
-  let nSlider: Element | any;
   let amountSlider: Element | any;
 
-  function drawHexes(diameter: number, rotation: number, n: number, dimensions: number[]) {
+  function drawHexes(diameter: number, rotation: number, dimensions: Point) {
 
-    context.push();
-    new Grid(dimensions[0], dimensions[1], rotation, diameter)
+    new Grid(dimensions.x, dimensions.y, rotation, diameter)
       .getFlatGrid()
       .forEach(hex => {
 
@@ -20,9 +18,9 @@ const sketch = (context: p5) => {
           .forEach(({ x, y }) => context.vertex(x, y));
         context.endShape(context.CLOSE);
         const { x, y } = hex.getOrigin()
-        context.text(`${hex.getOrigin().x}, ${hex.getOrigin().y}`, x, y)
+        context.line(x, y, context.mouseX, context.mouseY);
+        // context.text(`${hex.getOrigin().x}, ${hex.getOrigin().y}`, x, y)
       });
-    context.pop();
   }
 
   context.setup = () => {
@@ -31,9 +29,6 @@ const sketch = (context: p5) => {
     rotationSlider = context.createSlider(0, 360, 0);
     rotationSlider.position(0, 0);
     rotationSlider.style('width', `${(context.width / 3) - 10}px`);
-    nSlider = context.createSlider(1, 12, 6);
-    nSlider.position(context.width / 3, 0);
-    nSlider.style('width', `${(context.width / 3) - 10}px`);
     amountSlider = context.createSlider(1, 50, 4);
     amountSlider.position(context.width / 3 * 2, 0);
     amountSlider.style('width', `${(context.width / 3) - 10}px`);
@@ -41,18 +36,11 @@ const sketch = (context: p5) => {
 
   context.draw = () => {
     let rotation = rotationSlider.value();
-    let n = nSlider.value();
     let amount = amountSlider.value();
     context.background(220);
     context.text(rotation, 0, 30)
-    context.text(n, context.width / 3, 30)
     context.text(amount, context.width * 2 / 3, 30)
-    context.translate(100, 100);
-    drawHexes(60, rotation, n, [amount, amount]);
-    context.push()
-    context.translate(context.width / 2, 0)
-    drawHexes(60, rotation + 30, n, [amount, amount]);
-    context.pop()
+    drawHexes(60, rotation, {x: amount, y: amount});
   }
 }
 

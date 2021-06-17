@@ -1,4 +1,4 @@
-import { Hex } from "./Hex";
+import { Hex, Point } from "./Hex";
 
 export class Grid {
     grid: Hex[][];
