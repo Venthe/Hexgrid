@@ -4,7 +4,16 @@ const webpack = require('webpack');
 
 module.exports = {
     entry: {
-        main: './src/index.js'
+        main: './src/index.ts'
+    },
+    module: {
+        rules: [
+            {
+                test: /\.tsx?$/,
+                use: 'ts-loader',
+                exclude: /node_modules/,
+            }
+        ]
     },
     mode: 'development',
     devServer: {
@@ -18,6 +27,9 @@ module.exports = {
         //     p5: ['p5', 'setup']
         // })
     ],
+    resolve: {
+        extensions: ['.tsx', '.ts', '.js'],
+    },
     devtool: 'inline-source-map',
     output: {
         filename: '[name].bundle.js',
