@@ -10,17 +10,15 @@ const sketch = (context: p5) => {
   function drawHexes(diameter: number, rotation: number, dimensions: Point) {
 
     new Grid(dimensions.x, dimensions.y, rotation, diameter)
-      .getFlatGrid()
-      .forEach(hex => {
+    .draw((points, origin) => {
 
         context.beginShape();
-        hex.getPoints()
+        points
           .forEach(({ x, y }) => context.vertex(x, y));
         context.endShape(context.CLOSE);
-        const { x, y } = hex.getOrigin()
-        context.line(x, y, context.mouseX, context.mouseY);
+        context.line(origin.x, origin.y, context.mouseX, context.mouseY);
         // context.text(`${hex.getOrigin().x}, ${hex.getOrigin().y}`, x, y)
-      });
+      }, 30);
   }
 
   context.setup = () => {

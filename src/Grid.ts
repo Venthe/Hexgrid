@@ -18,7 +18,8 @@ export class Grid {
         }
     }
 
-    getFlatGrid(): Hex[] {
-        return this.grid.reduce((pv, cv) => [...pv, ...cv]);
+    draw(f: (points: Point[], origin: Point) => void, scale: number = 1): void {
+        this.grid.reduce((pv, cv) => [...pv, ...cv])
+            .forEach(h => h.draw(f, scale));
     }
 }
